@@ -1,6 +1,27 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@wolfpkgs/tsconfig/default.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "typeRoots": [
+      "./node_modules/.pnpm/@types+node@20.19.30/node_modules/@types"
+    ],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "outDir": "./dist",
+    "paths": {
+      "@directus/api": ["./node_modules/.pnpm/@directus+api@11.1.0_@types+node@20.19.30_encoding@0.1.13_lodash@4.17.23_terser@5.46.0/node_modules/@directus/api"],
+      "@directus/api/*": ["./node_modules/.pnpm/@directus+api@11.1.0_@types+node@20.19.30_encoding@0.1.13_lodash@4.17.23_terser@5.46.0/node_modules/@directus/api/*"],
+      "@directus/types": ["./node_modules/.pnpm/@directus+types@10.1.1/node_modules/@directus/types"],
+      "@directus/types/*": ["./node_modules/.pnpm/@directus+types@10.1.1/node_modules/@directus/types/*"],
+      "@directus/extensions-sdk": ["./node_modules/.pnpm/@directus+extensions-sdk@10.1.4_@types+node@20.19.30_terser@5.46.0/node_modules/@directus/extensions-sdk"],
+      "@directus/extensions-sdk/*": ["./node_modules/.pnpm/@directus+extensions-sdk@10.1.4_@types+node@20.19.30_terser@5.46.0/node_modules/@directus/extensions-sdk/*"]
+    }
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }
