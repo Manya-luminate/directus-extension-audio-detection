@@ -1,1 +1,161 @@
-"use strict";var e=require("child_process"),t=require("util"),a=require("os"),i=require("path"),r=require("fs/promises"),n=require("crypto");var o=Object.defineProperty,l=Object.getOwnPropertySymbols,s=Object.prototype.hasOwnProperty,c=Object.prototype.propertyIsEnumerable,h=(e,t,a)=>t in e?o(e,t,{enumerable:!0,configurable:!0,writable:!0,value:a}):e[t]=a,u=(e,t)=>{for(var a in t||(t={}))s.call(t,a)&&h(e,a,t[a]);if(l)for(var a of l(t))c.call(t,a)&&h(e,a,t[a]);return e},f=(e,t,a)=>(a=(a,i)=>(i=e[a])&&(t[a]=t=>new Promise((a,r,n)=>(t=i.call(e,t),n=t.done,Promise.resolve(t.value).then(e=>a({value:e,done:n}),r)))),(t=e[Symbol.asyncIterator])?t.call(e):(e=e[Symbol.iterator](),t={},a("next"),a("return"),t));const d=t.promisify(e.exec);var m=async function({init:e,action:t},{database:o,services:l,getSchema:s}){let c=null;try{c=require("sharp")}catch(e){console.log(e),process.exit(1)}const h=l.FieldsService;const m=l.FilesService;const y=l.AssetsService;async function w(){const e=await async function(){return new h({knex:o,schema:await s()})}();await e.readOne("directus_files","thumbhash").catch(()=>null)||await e.createField("directus_files",{collection:"directus_files",field:"thumbhash",type:"string",schema:{name:"thumbhash",table:"directus_files",data_type:"varchar",default_value:null,max_length:255,is_nullable:!0,foreign_key_column:null,foreign_key_table:null,has_auto_increment:!1,is_generated:!1,is_primary_key:!1,is_unique:!1,numeric_precision:null,numeric_scale:null,comment:null,foreign_key_schema:null,generation_expression:null},meta:{collection:"directus_files",field:"thumbhash",interface:"input",options:{iconLeft:"lens_blur"},display:null,display_options:{},special:null,group:null,hidden:!1,readonly:!1,required:!1,sort:null,translations:null,width:null,note:null,conditions:null,validation:null,validation_message:null}})}async function p(e,t=!1){var l,h,w;const p=await async function(){return new y({knex:o,schema:await s()})}(),g=await async function(){return new m({knex:o,schema:await s()})}(),b=await g.readOne(e,{fields:["id","thumbhash","type","width","height","filename_disk"]});if(!b)return void console.log("[thumbhash] failed to fetch file with key: ",e);if((b.thumbhash||"").length>0&&!t)return void console.log("[thumbhash] file already has thumbhash: ",e);const v=(null==(l=b.type)?void 0:l.startsWith("image/"))&&!(null==(h=b.type)?void 0:h.includes("svg")),_=null==(w=b.type)?void 0:w.startsWith("video/");if(!v&&!_)return void console.log("[thumbhash] skipping unsupported file type: ",b.type);let k,x;if(_){const e=i.join(a.tmpdir(),`thumbhash-video-${n.randomUUID()}.tmp`),t=i.join(a.tmpdir(),`thumbhash-frame-${n.randomUUID()}.jpg`);try{const a=await p.getAsset(b.id,{transformationParams:{}}),i=[];try{for(var P,q,O,S=f(a.stream);P=!(q=await S.next()).done;P=!1){const e=q.value;i.push(e)}}catch(q){O=[q]}finally{try{P&&(q=S.return)&&await q.call(S)}finally{if(O)throw O[0]}}await r.writeFile(e,Buffer.concat(i));const n=await async function(e,t){try{await d(`ffmpeg -i "${e}" -vframes 1 -vf "scale=100:100:force_original_aspect_ratio=decrease" -y "${t}" 2>&1`);try{const e=await c(t).metadata();if(e.width&&e.height)return{width:e.width,height:e.height}}catch(e){console.log("[thumbhash] failed to get frame dimensions:",e)}try{const{stdout:t}=await d(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${e}"`),a=t.trim().match(/(\d+)x(\d+)/);if(a&&a[1]&&a[2])return{width:parseInt(a[1],10),height:parseInt(a[2],10)}}catch(e){console.log("[thumbhash] failed to get video dimensions from ffprobe:",e)}return null}catch(e){return console.log("[thumbhash] failed to extract video frame:",e),null}}(e,t);try{await r.unlink(e)}catch(e){}if(!n){console.log("[thumbhash] failed to extract video frame dimensions");try{await r.unlink(t)}catch(e){}return}const o=await r.readFile(t);try{await r.unlink(t)}catch(e){}const l=await new Promise(async(e,t)=>{try{c(o).raw().ensureAlpha().toBuffer((a,i,r)=>{a&&t(a),e({buffer:i,info:r})})}catch(t){console.log(t),e({error:t})}});if("error"in l)return void console.log("[thumbhash] failed to process video frame: ",l.error.message);k=l.buffer,x=l.info}catch(a){try{await r.unlink(e).catch(()=>{}),await r.unlink(t).catch(()=>{})}catch(e){}return void console.log("[thumbhash] video processing error: ",a)}}else{if(null===b.width||null===b.height)return void console.log("[thumbhash] image missing dimensions: ",b.type);let e={width:b.width>b.height||b.width==b.height?100:void 0,height:b.height>b.width||b.width==b.height?100:void 0};const t=await p.getAsset(b.id,u({transformationParams:u({key:void 0,withoutEnlargement:!0,format:"webp"},e)},u({key:void 0,withoutEnlargement:!0,format:"webp"},e))),a=[];try{for(var I,j,$,A=f(t.stream);I=!(j=await A.next()).done;I=!1){const e=j.value;a.push(e)}}catch(j){$=[j]}finally{try{I&&(j=A.return)&&await j.call(A)}finally{if($)throw $[0]}}const i=await new Promise(async(e,t)=>{try{c(Buffer.concat(a)).raw().ensureAlpha().toBuffer((a,i,r)=>{a&&t(a),e({buffer:i,info:r})})}catch(t){console.log(t),e({error:t})}});if("error"in i)return void console.log("[thumbhash] failed to generate image: ",i.error.message);k=i.buffer,x=i.info}const B=Buffer.from(function(e,t,a){if(e>100||t>100)throw new Error(`${e}x${t} doesn't fit in 100x100`);let{PI:i,round:r,max:n,cos:o,abs:l}=Math,s=0,c=0,h=0,u=0;for(let i=0,r=0;i<e*t;i++,r+=4){let e=a[r+3]/255;s+=e/255*a[r],c+=e/255*a[r+1],h+=e/255*a[r+2],u+=e}u&&(s/=u,c/=u,h/=u);let f=u<e*t,d=f?5:7,m=n(1,r(d*e/n(e,t))),y=n(1,r(d*t/n(e,t))),w=[],p=[],g=[],b=[];for(let i=0,r=0;i<e*t;i++,r+=4){let e=a[r+3]/255,t=s*(1-e)+e/255*a[r],n=c*(1-e)+e/255*a[r+1],o=h*(1-e)+e/255*a[r+2];w[i]=(t+n+o)/3,p[i]=(t+n)/2-o,g[i]=t-n,b[i]=e}let v=(a,r,s)=>{let c=0,h=[],u=0,f=[];for(let d=0;d<s;d++)for(let m=0;m*s<r*(s-d);m++){let r=0;for(let t=0;t<e;t++)f[t]=o(i/e*m*(t+.5));for(let n=0;n<t;n++)for(let l=0,s=o(i/t*d*(n+.5));l<e;l++)r+=a[l+n*e]*f[l]*s;r/=e*t,m||d?(h.push(r),u=n(u,l(r))):c=r}if(u)for(let e=0;e<h.length;e++)h[e]=.5+.5/u*h[e];return[c,h,u]},[_,k,x]=v(w,n(3,m),n(3,y)),[P,q,O]=v(p,3,3),[S,I,j]=v(g,3,3),[$,A,B]=f?v(b,5,5):[],F=e>t,U=r(63*_)|r(31.5+31.5*P)<<6|r(31.5+31.5*S)<<12|r(31*x)<<18|f<<23,E=(F?y:m)|r(63*O)<<3|r(63*j)<<9|F<<15,D=[255&U,U>>8&255,U>>16,255&E,E>>8],W=f?6:5,L=0;f&&D.push(r(15*$)|r(15*B)<<4);for(let e of f?[k,q,I,A]:[k,q,I])for(let t of e)D[W+(L>>1)]|=r(15*t)<<((1&L++)<<2);return new Uint8Array(D)}(x.width,x.height,k)).toString("base64");await g.updateOne(b.id,{thumbhash:B})}l.ItemsService,e("routes.custom.after",async()=>{await w()}),t("files.upload",async function({payload:e,key:t,collection:a},{database:i,schema:r,accountability:n}){try{await p(t,!0)}catch(e){console.log("[thumbhash] file update error: "+e)}}),t("files.update",async function({payload:e,keys:t,collection:a},{database:i,schema:r,accountability:n}){try{for(var o,l,s,c=f(t);o=!(l=await c.next()).done;o=!1){const e=l.value;try{await p(e,!1)}catch(e){console.log("[thumbhash] file update error: "+e)}}}catch(l){s=[l]}finally{try{o&&(l=c.return)&&await l.call(c)}finally{if(s)throw s[0]}}})};module.exports=m;
+"use strict";
+
+const { exec } = require("child_process");
+const { promisify } = require("util");
+const { tmpdir } = require("os");
+const { join } = require("path");
+const { promises: fsp } = require("fs");
+const { randomUUID } = require("crypto");
+
+const execAsync = promisify(exec);
+
+module.exports = async function ({ init, action }, { database, services, getSchema }) {
+  async function getFilesService() {
+    return new services.FilesService({ knex: database, schema: await getSchema() });
+  }
+
+  async function getAssetsService() {
+    return new services.AssetsService({ knex: database, schema: await getSchema() });
+  }
+
+  async function getItemsService(collection) {
+    return new services.ItemsService(collection, { knex: database, schema: await getSchema() });
+  }
+
+  async function detectAudioFromFile(fileId) {
+    const assets = await getAssetsService();
+    const files = await getFilesService();
+
+    const file = await files.readOne(fileId, { fields: ["id", "type", "filename_disk"] });
+
+    if (!file) {
+      console.log("[---audio---] file not found:", fileId);
+      return false;
+    }
+
+    if (!file.type?.startsWith("video/")) {
+      console.log("[---audio---] skipping non-video file:", file.type);
+      return false;
+    }
+
+    const tempPath = join(tmpdir(), `has-audio-${randomUUID()}.tmp`);
+
+    try {
+      const videoAsset = await assets.getAsset(file.id, { transformationParams: {} });
+
+      const videoChunks = [];
+      for await (const chunk of videoAsset.stream) {
+        videoChunks.push(chunk);
+      }
+      await fsp.writeFile(tempPath, Buffer.concat(videoChunks));
+
+      let output = "";
+      try {
+        const result = await execAsync(
+          `ffmpeg -i "${tempPath}" -af volumedetect -vn -sn -dn -f null /dev/null`,
+          { maxBuffer: 1024 * 1024 * 10 }
+        );
+        output = result.stdout + result.stderr;
+      } catch (error) {
+        output = (error.stdout || "") + (error.stderr || "");
+      }
+
+      const match = output.match(/max_volume:\s*([-\d.]+)\s*dB/);
+      if (match) {
+        const maxVolume = parseFloat(match[1]);
+        const hasAudio = maxVolume > -80;
+        console.log(`[---audio---] file ${fileId}: max_volume=${maxVolume}dB → has_audio=${hasAudio}`);
+        return hasAudio;
+      }
+
+      console.log("[---audio---] volumedetect output not found for file:", fileId);
+      return false;
+    } catch (error) {
+      console.log("[---audio---] audio detection error for file:", fileId, error);
+      return false;
+    } finally {
+      try { await fsp.unlink(tempPath); } catch { }
+    }
+  }
+
+  init("routes.custom.after", async () => {
+    console.log("[---audio---] extension initialized");
+  });
+
+  action("files.upload", async function ({ payload, key }) {
+    console.log(`[---audio---] upload received — file: ${key}, type: ${payload?.type}`);
+    if (payload?.type?.startsWith("video/")) {
+      const hasAudio = await detectAudioFromFile(key).catch(() => false);
+      console.log(`[---audio---] file ${key}: has_audio=${hasAudio}`);
+    }
+  });
+
+  action("items.create", async function ({ payload, key, collection }) {
+    if (collection === "hotel_reels" || collection === "hotel_promotions") {
+      const fileId = payload?.media;
+      if (!fileId) return;
+      console.log(`[---audio---] upload received — ${collection}/${key}, media: ${fileId}`);
+      try {
+        const hasAudio = await detectAudioFromFile(fileId);
+        const items = await getItemsService(collection);
+        await items.updateOne(key, { has_audio: hasAudio });
+        console.log(`[---audio---] ${collection}/${key}: has_audio=${hasAudio}`);
+      } catch (error) {
+        console.log(`[---audio---] ${collection}.items.create error:`, error);
+      }
+    }
+
+    if (collection === "reels_files_1") {
+      const fileId = payload?.directus_files_id;
+      const reelId = payload?.reels_id;
+      if (!fileId || !reelId) return;
+      console.log(`[---audio---] upload received — reels/${reelId} via junction, file: ${fileId}`);
+      try {
+        const hasAudio = await detectAudioFromFile(fileId);
+        const reels = await getItemsService("reels");
+        await reels.updateOne(reelId, { has_audio: hasAudio });
+        console.log(`[---audio---] reels/${reelId}: has_audio=${hasAudio}`);
+      } catch (error) {
+        console.log("[---audio---] reels_files_1.items.create error:", error);
+      }
+    }
+  });
+
+  action("items.update", async function ({ payload, keys, collection }) {
+    if (collection === "hotel_reels" || collection === "hotel_promotions") {
+      const fileId = payload?.media;
+      if (!fileId) return;
+      console.log(`[---audio---] upload received — ${collection} keys=[${keys.join(",")}], media: ${fileId}`);
+      try {
+        const hasAudio = await detectAudioFromFile(fileId);
+        const items = await getItemsService(collection);
+        for (const key of keys) {
+          await items.updateOne(key, { has_audio: hasAudio });
+        }
+        console.log(`[---audio---] updated ${keys.length} ${collection} record(s): has_audio=${hasAudio}`);
+      } catch (error) {
+        console.log(`[---audio---] ${collection}.items.update error:`, error);
+      }
+    }
+
+    if (collection === "reels_files_1") {
+      const fileId = payload?.directus_files_id;
+      if (!fileId) return;
+      console.log(`[---audio---] upload received — reels_files_1 keys=[${keys.join(",")}], file: ${fileId}`);
+      try {
+        const hasAudio = await detectAudioFromFile(fileId);
+        const junctionService = await getItemsService("reels_files_1");
+        const reels = await getItemsService("reels");
+        for (const key of keys) {
+          const junction = await junctionService.readOne(key, { fields: ["reels_id"] });
+          if (junction?.reels_id) {
+            await reels.updateOne(junction.reels_id, { has_audio: hasAudio });
+            console.log(`[---audio---] reels/${junction.reels_id}: has_audio=${hasAudio}`);
+          }
+        }
+      } catch (error) {
+        console.log("[---audio---] reels_files_1.items.update error:", error);
+      }
+    }
+  });
+};
