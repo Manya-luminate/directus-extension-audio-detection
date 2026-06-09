@@ -11,15 +11,21 @@ const execAsync = promisify(exec);
 
 module.exports = async function ({ init, action }, { database, services, getSchema }) {
   async function getFilesService() {
-    return new services.FilesService({ knex: database, schema: await getSchema() });
+    return new services.FilesService({ knex: database, schema: await getSchema(), accountability: null });
   }
 
   async function getAssetsService() {
-    return new services.AssetsService({ knex: database, schema: await getSchema() });
+    return new services.AssetsService({ knex: database, schema: await getSchema(), accountability: null });
   }
 
   async function getItemsService(collection) {
-    return new services.ItemsService(collection, { knex: database, schema: await getSchema() });
+    return new services.ItemsService(collection, { knex: database, schema: await getSchema(), accountability: null });
+  }
+
+  function resolveId(value) {
+    if (!value) return null;
+    if (typeof value === "object") return value.id ?? null;
+    return value;
   }
 
   async function detectAudioFromFile(fileId) {
@@ -92,7 +98,7 @@ module.exports = async function ({ init, action }, { database, services, getSche
 
   action("items.create", async function ({ payload, key, collection }) {
     if (collection === "hotel_reels" || collection === "hotel_promotions") {
-      const fileId = payload?.media;
+      const fileId = resolveId(payload?.media);
       if (!fileId) return;
       console.log(`[---audio---] upload received — ${collection}/${key}, media: ${fileId}`);
       try {
@@ -106,8 +112,8 @@ module.exports = async function ({ init, action }, { database, services, getSche
     }
 
     if (collection === "reels_files_1") {
-      const fileId = payload?.directus_files_id;
-      const reelId = payload?.reels_id;
+      const fileId = resolveId(payload?.directus_files_id);
+      const reelId = resolveId(payload?.reels_id);
       if (!fileId || !reelId) return;
       console.log(`[---audio---] upload received — reels/${reelId} via junction, file: ${fileId}`);
       try {
@@ -123,7 +129,7 @@ module.exports = async function ({ init, action }, { database, services, getSche
 
   action("items.update", async function ({ payload, keys, collection }) {
     if (collection === "hotel_reels" || collection === "hotel_promotions") {
-      const fileId = payload?.media;
+      const fileId = resolveId(payload?.media);
       if (!fileId) return;
       console.log(`[---audio---] upload received — ${collection} keys=[${keys.join(",")}], media: ${fileId}`);
       try {
@@ -139,7 +145,7 @@ module.exports = async function ({ init, action }, { database, services, getSche
     }
 
     if (collection === "reels_files_1") {
-      const fileId = payload?.directus_files_id;
+      const fileId = resolveId(payload?.directus_files_id);
       if (!fileId) return;
       console.log(`[---audio---] upload received — reels_files_1 keys=[${keys.join(",")}], file: ${fileId}`);
       try {

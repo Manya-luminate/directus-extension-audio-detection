@@ -24,12 +24,13 @@ export default defineHook<HookConfig>(async function (
     return new filesService({
       knex: database,
       schema: await getSchema(),
+      accountability: null,
     }) as FilesService & ItemsService<File>;
   }
 
   const assetsService: typeof AssetsService = services.AssetsService;
   async function getAssetsService() {
-    return new assetsService({ knex: database, schema: await getSchema() });
+    return new assetsService({ knex: database, schema: await getSchema(), accountability: null });
   }
 
   const itemsService: typeof ItemsService = services.ItemsService;
@@ -37,7 +38,14 @@ export default defineHook<HookConfig>(async function (
     return new itemsService(collection, {
       knex: database,
       schema: await getSchema(),
+      accountability: null,
     });
+  }
+
+  function resolveId(value: any): string | null {
+    if (!value) return null;
+    if (typeof value === "object") return value.id ?? null;
+    return value;
   }
 
   async function detectAudioFromFile(fileId: string): Promise<boolean> {
