@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (keep dist/index.js for deployment)
+dist/src/
+dist/*.map
 
 # Logs
 *.log
