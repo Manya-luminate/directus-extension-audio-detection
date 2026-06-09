@@ -32,6 +32,7 @@
     "host": "10.0.0"
   },
   "scripts": {
+    "prepare": "directus-extension build",
     "build": "directus-extension build && pnpm build:pkg && pnpm run /copy:.*/",
     "build:pkg": "wtx package prepare",
     "build:dev": "directus-extension build --no-minify && wtx package prepare && pnpm copy:src",
